@@ -74,3 +74,53 @@ Falls du ein neues Feature ausprobieren willst, ohne den Hauptcode (`main`) zu g
     git merge mein-neues-feature
     ```
     
+
+---
+
+#  Google Scraper Product
+
+This repository contains a professional-grade web scraper built for **Module 122**. It automates the process of Scraping (Title, URL, Description) from Google Search results using the Brave Browser.
+
+##  Key Features
+
+- **Interactive UI:** Built with **Streamlit** for a modern, easy-to-use experience. No coding knowledge required to run searches.
+- **Robust Automation:** Uses **Selenium** to navigate Google, handle cookies, and manage pagination automatically.
+- **Anti-Detection:** 
+  - Implements a **Persistent User Profile** to maintain Google "trust" and drastically reduce Captchas.
+  - Randomizes delays and mimics human behavior.
+- **Data Quality:**
+  - **Deduplication:** Ensures no duplicate URLs are saved.
+  - **Enrichment:** Extracts Title, URL, and the Snippet Description.
+  - **Smart Export:** Saves files with unique timestamps (`leads_YYYYMMDD-HHMMSS.csv`) to prevent file locking errors.
+- **Error Handling:** Automatically captures debug screenshots if Google blocks the request or changes layout.
+
+##  Installation & Usage
+
+### Prerequisites
+1.  **Python 3.10+** installed.
+2.  **Brave Browser** installed (Path is configurable in the UI).
+
+### Quick Start (Windows)
+Double-click the `start_app.bat` file. 
+This script will:
+1.  Automatically install required dependencies (`requirements.txt`).
+2.  Launch the User Interface in your default browser.
+
+### Manual Start
+```bash
+pip install -r requirements.txt
+python -m streamlit run app.py
+```
+
+##  Configuration
+The settings are managed via the UI but saved to `config.json` for persistence.
+- **Brave Browser Path:** Location of your `brave.exe`.
+- **Headless Mode:** Run without opening a visible window (Uncheck this to solve Captchas manually).
+- **Delay:** Speed vs. Safety tradeoff slider.
+- **Pages:** How deep to scrape (1-10 pages).
+
+##  Project Structure
+- `app.py`: The frontend application (Streamlit).
+- `search.py`: The backend scraping logic (`GoogleScraper` class).
+- `start_app.bat`: One-click launcher for stakeholders.
+- `automation_profile/`: Folder storing browser cookies/session (Do not delete if you want to avoid Captchas).

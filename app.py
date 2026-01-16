@@ -7,8 +7,8 @@ from search import GoogleScraper
 
 st.set_page_config(page_title="Gemini Lead Scraper", page_icon="🚀", layout="wide")
 
-st.title("🚀 Gemini Lead Generation Scraper")
-st.markdown("Enter your search query below to extract leads directly from Google.")
+st.title("Google Scraper")
+st.markdown("Enter your search query below to extract links directly from Google.")
 
 # --- Sidebar Configuration ---
 st.sidebar.header("Settings")
