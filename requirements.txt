@@ -1,0 +1,4 @@
+selenium
+beautifulsoup4
+streamlit
+pandas
