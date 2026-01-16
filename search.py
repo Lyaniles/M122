@@ -120,13 +120,37 @@ class GoogleScraper:
         except Exception as e:
             print(f"Error saving CSV: {e}")
 
+    def go_to_next_page(self):
+        try:
+            # Try standard "Next" button ID used by Google
+            next_button = WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable((By.ID, "pnnext"))
+            )
+            next_button.click()
+            print("Navigating to next page...")
+            time.sleep(self.config.get("scrape_delay", 5)) # Wait for load
+            return True
+        except:
+            print("Next page button not found (or last page reached).")
+            return False
+
     def run(self):
         if not self.setup_driver():
             return
 
         try:
             self.search()
-            self.extract_results()
+            
+            max_pages = self.config.get("pages_to_scrape", 1)
+            for page in range(1, max_pages + 1):
+                print(f"--- Processing Page {page} ---")
+                self.extract_results()
+                
+                if page < max_pages:
+                    if not self.go_to_next_page():
+                        print("Stopping pagination.")
+                        break
+            
             self.save_to_csv()
         except Exception as e:
             print(f"Critical Error: {e}")

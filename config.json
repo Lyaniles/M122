@@ -3,5 +3,6 @@
     "search_query": "lead generation tools",
     "output_file": "leads_export.csv",
     "headless": false,
-    "scrape_delay": 5
+    "scrape_delay": 5,
+    "pages_to_scrape": 3
 }
