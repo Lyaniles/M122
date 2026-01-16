@@ -127,18 +127,29 @@ class GoogleScraper:
             print(f"Error saving CSV: {e}")
 
     def go_to_next_page(self):
-        try:
-            # Try standard "Next" button ID used by Google
-            next_button = WebDriverWait(self.driver, 5).until(
-                EC.element_to_be_clickable((By.ID, "pnnext"))
-            )
-            next_button.click()
-            print("Navigating to next page...")
-            time.sleep(self.config.get("scrape_delay", 5)) # Wait for load
-            return True
-        except:
-            print("Next page button not found (or last page reached).")
-            return False
+        # List of possible selectors for the "Next" button
+        selectors = [
+            (By.ID, "pnnext"),
+            (By.CSS_SELECTOR, 'a[aria-label="Next page"]'),
+            (By.CSS_SELECTOR, 'a[aria-label="Nächste Seite"]'),
+            (By.XPATH, "//span[contains(text(), 'Next')]/ancestor::a"),
+            (By.XPATH, "//span[contains(text(), 'Weiter')]/ancestor::a")
+        ]
+        
+        for strategy, selector in selectors:
+            try:
+                next_button = WebDriverWait(self.driver, 3).until(
+                    EC.element_to_be_clickable((strategy, selector))
+                )
+                next_button.click()
+                print(f"Navigating to next page (found via {strategy})...")
+                time.sleep(self.config.get("scrape_delay", 5))
+                return True
+            except:
+                continue # Try next selector
+        
+        print("Next page button not found (or last page reached).")
+        return False
 
     def run(self):
         if not self.setup_driver():
