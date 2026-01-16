@@ -11,8 +11,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 class GoogleScraper:
-    def __init__(self, config_path="config.json"):
-        self.config = self._load_config(config_path)
+    def __init__(self, config_path="config.json", config_dict=None):
+        if config_dict:
+            self.config = config_dict
+        else:
+            self.config = self._load_config(config_path)
+            
         self.driver = None
         self.results = []
         self.seen_urls = set()
@@ -34,6 +38,12 @@ class GoogleScraper:
     def setup_driver(self):
         options = Options()
         options.binary_location = self.config.get("brave_path")
+        
+        # Use a persistent profile to keep cookies/session and avoid Captchas
+        profile_dir = os.path.join(os.getcwd(), "automation_profile")
+        if not os.path.exists(profile_dir):
+            os.makedirs(profile_dir)
+        options.add_argument(f"--user-data-dir={profile_dir}")
         
         if self.config.get("headless"):
             options.add_argument("--headless")
@@ -92,17 +102,30 @@ class GoogleScraper:
         raw_results = soup.find_all('div', dict(cfg=True)) or soup.select(".g") or soup.select(".tF2Cxc")
         print(f"DEBUG: Found {len(raw_results)} raw containers")
 
+        if len(raw_results) == 0:
+            print("WARNING: No results found. Saving debug screenshot...")
+            try:
+                self.driver.save_screenshot("debug_screenshot.png")
+                with open("debug_page_source.html", "w", encoding="utf-8") as f:
+                    f.write(self.driver.page_source)
+            except Exception as e:
+                print(f"Failed to save debug info: {e}")
+
         new_count = 0
         for res in raw_results:
             title_el = res.find('h3')
             link_el = res.find('a')
             
+            # Attempt to find the description (snippet)
+            desc_el = res.select_one(".VwiC3b, .lyLwlc, .yXK7lf, div[style*='-webkit-line-clamp']")
+            description = desc_el.get_text(strip=True) if desc_el else "No description found"
+
             if title_el and link_el:
                 title = title_el.get_text(strip=True)
                 link = link_el.get('href')
                 
                 if link and link.startswith("http") and link not in self.seen_urls:
-                    self.results.append([title, link])
+                    self.results.append([title, link, description])
                     self.seen_urls.add(link)
                     new_count += 1
         
@@ -113,7 +136,7 @@ class GoogleScraper:
         try:
             with open(filename, mode="w", newline="", encoding="utf-8") as file:
                 writer = csv.writer(file)
-                writer.writerow(["Name / Title", "URL"])
+                writer.writerow(["Name / Title", "URL", "Description"])
                 writer.writerows(self.results)
             
             abs_path = os.path.abspath(filename)

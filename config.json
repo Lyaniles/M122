@@ -1,8 +1,8 @@
 {
     "brave_path": "C:\\Users\\monsi\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
-    "search_query": "lead generation tools",
-    "output_file": "leads_export.csv",
+    "search_query": "mop classic which battle pets to farm",
+    "output_file": "leads_20260116-103055.csv",
     "headless": false,
-    "scrape_delay": 5,
-    "pages_to_scrape": 3
+    "scrape_delay": 4,
+    "pages_to_scrape": 1
 }
