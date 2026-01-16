@@ -15,6 +15,7 @@ class GoogleScraper:
         self.config = self._load_config(config_path)
         self.driver = None
         self.results = []
+        self.seen_urls = set()
 
     def _load_config(self, path):
         try:
@@ -91,6 +92,7 @@ class GoogleScraper:
         raw_results = soup.find_all('div', dict(cfg=True)) or soup.select(".g") or soup.select(".tF2Cxc")
         print(f"DEBUG: Found {len(raw_results)} raw containers")
 
+        new_count = 0
         for res in raw_results:
             title_el = res.find('h3')
             link_el = res.find('a')
@@ -99,8 +101,12 @@ class GoogleScraper:
                 title = title_el.get_text(strip=True)
                 link = link_el.get('href')
                 
-                if link and link.startswith("http"):
+                if link and link.startswith("http") and link not in self.seen_urls:
                     self.results.append([title, link])
+                    self.seen_urls.add(link)
+                    new_count += 1
+        
+        print(f"DEBUG: Added {new_count} new unique leads.")
 
     def save_to_csv(self):
         filename = self.config.get("output_file", "leads_export.csv")
