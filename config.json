@@ -1,7 +1,7 @@
 {
     "brave_path": "C:\\Users\\monsi\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
-    "search_query": "Realestate zurich",
-    "output_file": "leads_20260116-110244.csv",
+    "search_query": "what makes a good browser ",
+    "output_file": "leads_20260116-112148.csv",
     "headless": false,
     "scrape_delay": 5,
     "pages_to_scrape": 1

@@ -6,7 +6,7 @@ import time
 from search import GoogleScraper
 from database import ScraperDB
 
-st.set_page_config(page_title=" Google Scraper", layout="wide")
+st.set_page_config(page_title="Google Scraper", layout="wide")
 
 # Initialize Database with config settings
 # Load config initially to connect to DB
@@ -18,7 +18,7 @@ except:
 
 db = ScraperDB(config_dict=initial_config)
 
-st.title("🚀 Gemini Google Scraper")
+st.title(" Google Scraper")
 
 # --- Tabs for Scraper and History ---
 tab1, tab2 = st.tabs(["🔍 Scraper", "📂 Database History"])

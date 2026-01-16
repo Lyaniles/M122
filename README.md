@@ -1,126 +1,117 @@
-# M122
-Dies ist ein Repo für das Modul 122 der TBZ.
+<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
+<a id="readme-top"></a>
 
----
-# Guide um Github Repo mit VS Code zu verbinden.
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <h3 align="center">Google Scraper</h3>
 
+  <p align="center">
+    A Streamlit application that scrapes Google search results for leads.
+    <br />
+    <br />
+    <a href="#about-the-project">About The Project</a>
+    &middot;
+    <a href="#getting-started">Getting Started</a>
+    &middot;
+    <a href="#usage">Usage</a>
+  </p>
+</div>
 
-#  1. Das Remote-Repository verknüpfen
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#configuration">Configuration</a></li>
+    <li><a href="#project-structure">Project Structure</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+  </ol>
+</details>
 
-Bevor du Daten übertragen kannst, muss dein lokaler Ordner wissen, wohin die Reise geht. Mit dem Befehl `remote add` stellst du die Verbindung zu deinem GitHub-Repository her. Wir nennen diese Verbindung standardmäßig `origin`
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
-``` Shell
- git remote add origin https://github.com/Lyaniles/M122
-```
+This project is a web scraper with a user-friendly interface built with Streamlit. It automates the process of finding business leads (Title, URL, Description) from Google Search results using Selenium and the Brave Browser. The scraped data is then saved to a MySQL database.
 
-# 2. Abgleich mit dem Server (Synchronisation)
+### Built With
 
-Um sicherzustellen, dass dein lokaler Stand nicht mit Änderungen auf GitHub kollidiert, führen wir einen `pull` durch. Die Flag `--rebase` sorgt dabei für eine saubere Historie, indem sie deine lokalen Änderungen "oben auf" die neuesten Änderungen vom Server setzt, anstatt einen unübersichtlichen Merge-Commit zu erstellen.
+This project is built with the following technologies:
 
-``` Shell
-git pull origin main --rebase
-```
-> **Hinweis:** Falls dein Haupt-Branch auf GitHub anders heißt (z.B. `master`), passe den Namen im Befehl entsprechend an. 
+*   [Python](https://www.python.org/)
+*   [Streamlit](https://streamlit.io/)
+*   [Selenium](https://www.selenium.dev/)
+*   [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/)
+*   [Pandas](https://pandas.pydata.org/)
+*   [MySQL](https://www.mysql.com/)
 
-# 3. Die Daten hochladen
+<!-- GETTING STARTED -->
+## Getting Started
 
-Sobald dein lokaler Stand aktuell ist, kannst du deine Arbeit auf GitHub veröffentlichen. Mit der Flag `-u` (kurz für `--set-upstream`) speicherst du die Verbindung für die Zukunft. Das bedeutet, dass du ab jetzt einfach nur noch `git push` eingeben musst, ohne jedes Mal `origin main` zu wiederholen.
-
-``` Shell
-git push -u origin main
-```
-
-### 1. Änderungen speichern (Der Standard-Zyklus)
-
-Wenn du Dateien bearbeitet hast, musst du diese „stagen“ (vormerken) und dann „committen“ (festschreiben).
-
-- **Status prüfen:** Schau nach, welche Dateien geändert wurden:
-    ``` Shell
-    git status
-    ```
-    
-- **Dateien hinzufügen:** Alle Änderungen für den nächsten Commit vormerken:
-    ```Sh
-    git add .
-    ```
-    
-- **Änderungen festschreiben:** Erstelle einen Snapshot deiner Arbeit mit einer kurzen Nachricht:
-    ```Sh
-    git commit -m "Hier beschreiben, was du gemacht hast"
-    ```
-    
-- **Hochladen:** Deine Commits an GitHub senden:
-    ```Sh
-    git push
-    ```
-
-### 2. Mit Branches arbeiten (Parallel arbeiten)
-
-Falls du ein neues Feature ausprobieren willst, ohne den Hauptcode (`main`) zu gefährden, solltest du einen eigenen Zweig (Branch) verwenden.
-
-- **Neuen Branch erstellen:**
-    ```Sh
-    git checkout -b mein-neues-feature
-    ```
-    
-- **Zwischen Branches wechseln:**
-    ```Sh
-    git checkout main
-    ```
-    
-- **Branches zusammenführen (Merge):** Wenn dein Feature fertig ist, wechselst du zurück in den `main` und holst dir die Änderungen:
-    ```Sh
-    git checkout main
-    git merge mein-neues-feature
-    ```
-    
-
----
-
-# 🚀 Gemini Lead Scraper Product
-
-This repository contains a professional-grade web scraper built for **Module 122**. It automates the process of finding business leads (Title, URL, Description) from Google Search results using the Brave Browser and saves them to a MariaDB database.
-
-## ✨ Key Features
-
-- **Interactive UI:** Built with **Streamlit** for a modern, easy-to-use experience. No coding knowledge required to run searches.
-- **Robust Automation:** Uses **Selenium** to navigate Google, handle cookies, and manage pagination automatically.
-- **Database Integration:**
-  - **MariaDB Support:** Automatically stores all scraped leads in a local or remote MariaDB 10.11+ database.
-  - **Auto-Deduplication:** Prevents duplicate URLs from entering the database.
-  - **History View:** View and export your entire scraping history directly from the UI.
-- **Anti-Detection:** 
-  - Implements a **Persistent User Profile** to maintain Google "trust" and drastically reduce Captchas.
-  - Randomizes delays and mimics human behavior.
-- **Data Quality:**
-  - **Enrichment:** Extracts Title, URL, and the Snippet Description.
-  - **Smart Export:** Saves CSV files with unique timestamps (`leads_YYYYMMDD-HHMMSS.csv`) to prevent file locking errors.
-- **Error Handling:** Automatically captures debug screenshots if Google blocks the request or changes layout.
-
-## 🛠️ Installation & Usage
+To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
-1.  **Python 3.10+** installed.
-2.  **Brave Browser** installed (Path is configurable in the UI).
-3.  **MariaDB Server (10.11+)** installed and running.
-    - The application will automatically create the `google_scraper` database if the user has permissions.
 
-### Quick Start (Windows)
-Double-click the `start_app.bat` file. 
-This script will:
-1.  Create a virtual environment (`venv`).
-2.  Install dependencies (`requirements.txt`).
-3.  Launch the User Interface in your default browser.
+You need to have the following software installed on your machine:
 
-### Manual Start
-```bash
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python -m streamlit run app.py
+*   Python 3.x
+*   Brave Browser
+*   MySQL Server
+
+### Installation
+
+1.  Clone the repo
+    ```sh
+    git clone https://github.com/your_username/your_repository.git
+    ```
+2.  Navigate to the project directory
+    ```sh
+    cd your_repository
+    ```
+3.  Create a virtual environment
+    ```sh
+    python -m venv venv
+    ```
+4.  Activate the virtual environment
+    ```sh
+    venv\Scripts\activate
+    ```
+5.  Install the required packages
+    ```sh
+    pip install -r requirements.txt
+    ```
+6.  Configure your database connection and Brave Browser path in the `config.json` file.
+
+<!-- USAGE EXAMPLES -->
+## Usage
+
+You can run the application using the `start_app.bat` file, which will automatically set up the environment and start the Streamlit server.
+
+Alternatively, you can run the application manually with the following command:
+
+```sh
+streamlit run app.py
 ```
 
-## ⚙️ Configuration
+Once the application is running, you can open it in your browser and start scraping by entering a search query and clicking the "Start Scraping" button.
+
+<!-- CONFIGURATION -->
+## Configuration
 The settings are managed via the UI but saved to `config.json` for persistence.
 - **Database:**
   - `db_host`: Database host (default: `localhost`)
@@ -132,9 +123,38 @@ The settings are managed via the UI but saved to `config.json` for persistence.
   - **Headless Mode:** Run without opening a visible window (Uncheck this to solve Captchas manually).
   - **Pages:** How deep to scrape (1-10 pages).
 
-## 📂 Project Structure
+<!-- PROJECT STRUCTURE -->
+## Project Structure
 - `app.py`: The frontend application (Streamlit).
 - `search.py`: The backend scraping logic (`GoogleScraper` class).
 - `database.py`: Handles MariaDB connection and data insertion.
 - `start_app.bat`: One-click launcher for stakeholders.
 - `automation_profile/`: Folder storing browser cookies/session (Do not delete if you want to avoid Captchas).
+
+<!-- ROADMAP -->
+## Roadmap
+
+- [ ] Add support for other search engines.
+- [ ] Add more data fields to be scraped.
+- [ ] Improve error handling and reporting.
+
+See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
+
+<!-- CONTRIBUTING -->
+## Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+Don't forget to give the project a star! Thanks again!
+
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
+
+<!-- LICENSE -->
+## License
+
+Distributed under the Unlicense License. See `LICENSE.txt` for more information.

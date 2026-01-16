@@ -1,6 +1,10 @@
 import mysql.connector
 import pandas as pd
 import json
+import warnings
+
+# Suppress pandas warning about raw DBAPI connection
+warnings.filterwarnings('ignore', category=UserWarning, module='pandas')
 
 class ScraperDB:
     def __init__(self, config_path="config.json", config_dict=None):
