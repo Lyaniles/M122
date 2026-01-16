@@ -77,50 +77,64 @@ Falls du ein neues Feature ausprobieren willst, ohne den Hauptcode (`main`) zu g
 
 ---
 
-#  Google Scraper Product
+# 🚀 Gemini Lead Scraper Product
 
-This repository contains a professional-grade web scraper built for **Module 122**. It automates the process of Scraping (Title, URL, Description) from Google Search results using the Brave Browser.
+This repository contains a professional-grade web scraper built for **Module 122**. It automates the process of finding business leads (Title, URL, Description) from Google Search results using the Brave Browser and saves them to a MariaDB database.
 
-##  Key Features
+## ✨ Key Features
 
 - **Interactive UI:** Built with **Streamlit** for a modern, easy-to-use experience. No coding knowledge required to run searches.
 - **Robust Automation:** Uses **Selenium** to navigate Google, handle cookies, and manage pagination automatically.
+- **Database Integration:**
+  - **MariaDB Support:** Automatically stores all scraped leads in a local or remote MariaDB 10.11+ database.
+  - **Auto-Deduplication:** Prevents duplicate URLs from entering the database.
+  - **History View:** View and export your entire scraping history directly from the UI.
 - **Anti-Detection:** 
   - Implements a **Persistent User Profile** to maintain Google "trust" and drastically reduce Captchas.
   - Randomizes delays and mimics human behavior.
 - **Data Quality:**
-  - **Deduplication:** Ensures no duplicate URLs are saved.
   - **Enrichment:** Extracts Title, URL, and the Snippet Description.
-  - **Smart Export:** Saves files with unique timestamps (`leads_YYYYMMDD-HHMMSS.csv`) to prevent file locking errors.
+  - **Smart Export:** Saves CSV files with unique timestamps (`leads_YYYYMMDD-HHMMSS.csv`) to prevent file locking errors.
 - **Error Handling:** Automatically captures debug screenshots if Google blocks the request or changes layout.
 
-##  Installation & Usage
+## 🛠️ Installation & Usage
 
 ### Prerequisites
 1.  **Python 3.10+** installed.
 2.  **Brave Browser** installed (Path is configurable in the UI).
+3.  **MariaDB Server (10.11+)** installed and running.
+    - The application will automatically create the `google_scraper` database if the user has permissions.
 
 ### Quick Start (Windows)
 Double-click the `start_app.bat` file. 
 This script will:
-1.  Automatically install required dependencies (`requirements.txt`).
-2.  Launch the User Interface in your default browser.
+1.  Create a virtual environment (`venv`).
+2.  Install dependencies (`requirements.txt`).
+3.  Launch the User Interface in your default browser.
 
 ### Manual Start
 ```bash
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-##  Configuration
+## ⚙️ Configuration
 The settings are managed via the UI but saved to `config.json` for persistence.
-- **Brave Browser Path:** Location of your `brave.exe`.
-- **Headless Mode:** Run without opening a visible window (Uncheck this to solve Captchas manually).
-- **Delay:** Speed vs. Safety tradeoff slider.
-- **Pages:** How deep to scrape (1-10 pages).
+- **Database:**
+  - `db_host`: Database host (default: `localhost`)
+  - `db_user`: Database user (default: `root`)
+  - `db_password`: Database password (leave empty if none)
+  - `db_name`: Database name (default: `google_scraper`)
+- **Scraper:**
+  - **Brave Browser Path:** Location of your `brave.exe`.
+  - **Headless Mode:** Run without opening a visible window (Uncheck this to solve Captchas manually).
+  - **Pages:** How deep to scrape (1-10 pages).
 
-##  Project Structure
+## 📂 Project Structure
 - `app.py`: The frontend application (Streamlit).
 - `search.py`: The backend scraping logic (`GoogleScraper` class).
+- `database.py`: Handles MariaDB connection and data insertion.
 - `start_app.bat`: One-click launcher for stakeholders.
 - `automation_profile/`: Folder storing browser cookies/session (Do not delete if you want to avoid Captchas).

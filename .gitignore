@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+ENV/
+
+# Project specific
+automation_profile/
+*.csv
+debug_screenshot.png
+debug_page_source.html
+google_scraper.db
+
+# Config
+# We keep config.json as a template, but usually you'd ignore it if it has secrets.
+# For now, let's keep it so the project works, but warn the user.
+
+# OS generated files
+.DS_Store
+Thumbs.db
