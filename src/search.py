@@ -10,6 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
+from src.utils import get_browser_path
+
 class GoogleScraper:
     def __init__(self, config_path="config.json", config_dict=None):
         if config_dict:
@@ -41,7 +43,7 @@ class GoogleScraper:
 
         # Defaults
         return {
-            "brave_path": r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+            "brave_path": get_browser_path(), # Dynamic default
             "search_query": "test query",
             "output_file": "results.csv",
             "headless": False,
@@ -50,7 +52,19 @@ class GoogleScraper:
 
     def setup_driver(self):
         options = Options()
-        options.binary_location = self.config.get("brave_path")
+        
+        # Determine browser path: Config > Auto-detect > None
+        browser_path = self.config.get("brave_path")
+        if not browser_path or not os.path.exists(browser_path):
+            print(f"Configured path '{browser_path}' not found. Attempting auto-detection...")
+            browser_path = get_browser_path()
+        
+        if not browser_path:
+            print("Error: Could not find Brave or Chrome browser. Please set 'brave_path' in settings.")
+            return False
+
+        options.binary_location = browser_path
+        print(f"Using browser at: {browser_path}")
         
         # Use a persistent profile to keep cookies/session and avoid Captchas
         profile_dir = os.path.join(os.getcwd(), "automation_profile")

@@ -1,5 +1,5 @@
 {
-    "brave_path": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+    "brave_path": null,
     "db_user": "root",
     "db_password": "",
     "db_host": "localhost",

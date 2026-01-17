@@ -5,6 +5,7 @@ import os
 import time
 from src.search import GoogleScraper
 from src.database import ScraperDB
+from src.utils import get_browser_path
 
 st.set_page_config(page_title="Google Scraper", layout="wide")
 
@@ -45,9 +46,15 @@ with tab1:
     st.sidebar.header("Settings")
     
     # Defaults
-    default_brave = config.get("brave_path", r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe")
+    detected_browser = get_browser_path()
+    config_browser = config.get("brave_path")
     
-    brave_path = st.sidebar.text_input("Brave Browser Path", value=default_brave)
+    # Use config value if valid, else detected, else empty string
+    default_brave = config_browser if config_browser else (detected_browser if detected_browser else "")
+    
+    brave_path = st.sidebar.text_input("Brave/Chrome Browser Path", value=default_brave)
+    if not brave_path:
+        st.sidebar.warning("Could not auto-detect browser. Please enter path manually.")
     headless = st.sidebar.checkbox("Headless Mode (Hide Browser)", value=config.get("headless", True))
     scrape_delay = st.sidebar.slider("Delay between pages (seconds)", 2, 15, config.get("scrape_delay", 5))
     pages_to_scrape = st.sidebar.number_input("Pages to scrape", min_value=1, max_value=10, value=config.get("pages_to_scrape", 3))
