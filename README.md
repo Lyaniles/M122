@@ -30,7 +30,7 @@
   <summary>Table of Contents</summary>
   <ol>
     <li><a href="#about-the-project">About The Project</a></li>
-    <li><a href="#key-features">✨ Key Features</a></li>
+    <li><a href="#key-features"> Key Features</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -56,14 +56,14 @@ It solves the problem of manual prospecting by providing a tool that mimics huma
 
 ## ✨ Key Features
 
-- **🎯 Interactive UI:** Built with **Streamlit** for a modern, easy-to-use experience. No coding knowledge required to run searches.
-- **🌍 Universal Support:** **Auto-detects** your browser (Brave or Chrome) on Windows, Mac, and Linux.
-- **🤖 Robust Automation:** Uses **Selenium** to navigate Google, handle cookies, and manage pagination automatically.
-- **🗄️ Database Integration:**
+- ** Interactive UI:** Built with **Streamlit** for a modern, easy-to-use experience. No coding knowledge required to run searches.
+- ** Universal Support:** **Auto-detects** your browser (Brave or Chrome) on Windows, Mac, and Linux.
+- ** Robust Automation:** Uses **Selenium** to navigate Google, handle cookies, and manage pagination automatically.
+- ** Database Integration:**
   - **MariaDB Support:** Automatically stores all scraped leads in a local MariaDB database.
   - **Auto-Deduplication:** Prevents duplicate URLs from entering the database.
   - **History View:** View and export your entire scraping history directly from the UI.
-- **🕵️ Anti-Detection:** 
+- ** Anti-Detection:** 
   - Implements a **Persistent User Profile** (`automation_profile/`) to maintain Google "trust" and reduce Captchas.
   - Randomizes delays and mimics human behavior.
 - **📂 Smart Output:**
