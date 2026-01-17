@@ -10,9 +10,11 @@ ENV/
 # Project specific
 automation_profile/
 *.csv
-debug_screenshot.png
-debug_page_source.html
 google_scraper.db
+
+# Generated Folders
+debug/
+output/
 
 # Config
 config.json

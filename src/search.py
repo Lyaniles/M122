@@ -132,8 +132,12 @@ class GoogleScraper:
         if len(raw_results) == 0:
             print("WARNING: No results found. Saving debug screenshot...")
             try:
-                self.driver.save_screenshot("debug_screenshot.png")
-                with open("debug_page_source.html", "w", encoding="utf-8") as f:
+                # Ensure debug directory exists
+                if not os.path.exists("debug"):
+                    os.makedirs("debug")
+                    
+                self.driver.save_screenshot(os.path.join("debug", "debug_screenshot.png"))
+                with open(os.path.join("debug", "debug_page_source.html"), "w", encoding="utf-8") as f:
                     f.write(self.driver.page_source)
             except Exception as e:
                 print(f"Failed to save debug info: {e}")
@@ -163,8 +167,13 @@ class GoogleScraper:
         return new_leads
 
     def save_to_csv(self):
-        filename = self.config.get("output_file", "leads_export.csv")
+        filename = self.config.get("output_file", os.path.join("output", "leads_export.csv"))
         try:
+            # Ensure output directory exists
+            output_dir = os.path.dirname(filename)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
             with open(filename, mode="w", newline="", encoding="utf-8") as file:
                 writer = csv.writer(file)
                 writer.writerow(["Name / Title", "URL", "Description"])

@@ -68,7 +68,7 @@ with tab1:
         else:
             # Generate unique filename for this run
             timestamp = time.strftime("%Y%m%d-%H%M%S")
-            output_file = f"leads_{timestamp}.csv"
+            output_file = os.path.join("output", f"leads_{timestamp}.csv")
 
             # Runtime config
             run_config = config.copy()
