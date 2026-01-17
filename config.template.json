@@ -1,0 +1,7 @@
+{
+    "brave_path": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+    "db_user": "root",
+    "db_password": "",
+    "db_host": "localhost",
+    "db_name": "google_scraper"
+}

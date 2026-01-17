@@ -3,20 +3,35 @@ import pandas as pd
 import json
 import os
 import time
-from search import GoogleScraper
-from database import ScraperDB
+from src.search import GoogleScraper
+from src.database import ScraperDB
 
 st.set_page_config(page_title="Google Scraper", layout="wide")
 
-# Initialize Database with config settings
-# Load config initially to connect to DB
-try:
-    with open("config.json", "r", encoding="utf-8") as f:
-        initial_config = json.load(f)
-except:
-    initial_config = {}
+def load_config():
+    """Load config from config.json or fallback to template/defaults."""
+    config = {}
+    
+    # 1. Load template first for defaults
+    if os.path.exists("config.template.json"):
+        try:
+            with open("config.template.json", "r", encoding="utf-8") as f:
+                config.update(json.load(f))
+        except Exception:
+            pass
 
-db = ScraperDB(config_dict=initial_config)
+    # 2. Override with local config if exists
+    if os.path.exists("config.json"):
+        try:
+            with open("config.json", "r", encoding="utf-8") as f:
+                config.update(json.load(f))
+        except Exception:
+            pass
+            
+    return config
+
+# Load configuration once
+config = load_config()
 
 st.title(" Google Scraper")
 
@@ -28,20 +43,11 @@ with tab1:
 
     # --- Sidebar Configuration ---
     st.sidebar.header("Settings")
-    try:
-        with open("config.json", "r", encoding="utf-8") as f:
-            config = json.load(f)
-    except Exception:
-        config = {
-            "brave_path": "C:\\Users\\monsi\\AppData\\Local\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
-            "search_query": "lead generation tools",
-            "output_file": "leads_export.csv",
-            "headless": True,
-            "scrape_delay": 5,
-            "pages_to_scrape": 3
-        }
-
-    brave_path = st.sidebar.text_input("Brave Browser Path", value=config.get("brave_path"))
+    
+    # Defaults
+    default_brave = config.get("brave_path", r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe")
+    
+    brave_path = st.sidebar.text_input("Brave Browser Path", value=default_brave)
     headless = st.sidebar.checkbox("Headless Mode (Hide Browser)", value=config.get("headless", True))
     scrape_delay = st.sidebar.slider("Delay between pages (seconds)", 2, 15, config.get("scrape_delay", 5))
     pages_to_scrape = st.sidebar.number_input("Pages to scrape", min_value=1, max_value=10, value=config.get("pages_to_scrape", 3))
@@ -53,85 +59,94 @@ with tab1:
         if not query:
             st.error("Please enter a search query!")
         else:
-            # Generate unique filename to avoid locking issues
+            # Generate unique filename for this run
             timestamp = time.strftime("%Y%m%d-%H%M%S")
             output_file = f"leads_{timestamp}.csv"
 
-            # Update config dictionary for the scraper
-            run_config = {
+            # Runtime config
+            run_config = config.copy()
+            run_config.update({
                 "brave_path": brave_path,
                 "search_query": query,
                 "output_file": output_file,
                 "headless": headless,
                 "scrape_delay": scrape_delay,
                 "pages_to_scrape": pages_to_scrape
-            }
-            
-            # Save temporary config for the session
-            with open("config.json", "w", encoding="utf-8") as f:
-                json.dump(run_config, f, indent=4)
+            })
 
             with st.status("Scraping Google...", expanded=True) as status:
                 st.write("Initializing Browser...")
-                # Pass the configuration directly to the class
+                
+                # Initialize Scraper
                 scraper = GoogleScraper(config_dict=run_config)
                 
-                if scraper.setup_driver():
-                    st.write(f"Searching for '{query}'...")
-                    scraper.search()
-                    
-                    max_p = run_config["pages_to_scrape"]
-                    for p in range(1, max_p + 1):
-                        st.write(f"Processing Page {p}...")
-                        scraper.extract_results()
-                        
-                        # Save to Database immediately
-                        new_leads_count = 0
-                        for row in scraper.results:
-                            # scraper.results contains [title, link, description]
-                            # We check if this specific row was just added to prevent duplicates in loop,
-                            # but db.insert_lead handles unique URL check anyway.
-                            saved = db.insert_lead(query, row[0], row[1], row[2])
-                            if saved:
-                                new_leads_count += 1
-                        
-                        if p < max_p:
-                            if not scraper.go_to_next_page():
-                                break
-                    
-                    scraper.save_to_csv()
-                    scraper.driver.quit()
-                    status.update(label="Scraping Complete!", state="complete", expanded=False)
-                else:
-                    st.error("Failed to initialize browser. Check the Brave path in settings.")
+                # Initialize Database (using Context Manager)
+                try:
+                    with ScraperDB(config_dict=run_config) as db:
+                        if scraper.setup_driver():
+                            st.write(f"Searching for '{query}'...")
+                            scraper.search()
+                            
+                            max_p = run_config["pages_to_scrape"]
+                            for p in range(1, max_p + 1):
+                                st.write(f"Processing Page {p}...")
+                                
+                                # Extract newly found leads
+                                new_leads = scraper.extract_results()
+                                
+                                # Save to Database immediately
+                                saved_count = 0
+                                for row in new_leads:
+                                    # row = [title, url, description]
+                                    if db.insert_lead(query, row[0], row[1], row[2]):
+                                        saved_count += 1
+                                
+                                # Only navigate if not the last page
+                                if p < max_p:
+                                    if not scraper.go_to_next_page():
+                                        st.write("No more pages.")
+                                        break
+                            
+                            scraper.save_to_csv()
+                            scraper.driver.quit()
+                            status.update(label="Scraping Complete!", state="complete", expanded=False)
 
-            # --- Display Results ---
-            if os.path.exists(output_file):
-                df = pd.read_csv(output_file)
-                st.subheader(f"Found {len(df)} Leads (Saved to Database)")
-                # Fixed deprecated parameter
-                st.dataframe(df, width=1000) 
-                
-                # Download Button
-                with open(output_file, "rb") as f:
-                    st.download_button(
-                        label="Download CSV",
-                        data=f,
-                        file_name=output_file,
-                        mime="text/csv"
-                    )
+                            # --- Display Results from Memory ---
+                            if scraper.results:
+                                df = pd.DataFrame(scraper.results, columns=["Name / Title", "URL", "Description"])
+                                st.subheader(f"Found {len(df)} Leads (Saved to Database)")
+                                st.dataframe(df, width=1000)
+                                
+                                # Download Button (using in-memory data)
+                                csv_data = df.to_csv(index=False).encode('utf-8')
+                                st.download_button(
+                                    label="Download CSV",
+                                    data=csv_data,
+                                    file_name=output_file,
+                                    mime="text/csv"
+                                )
+                            else:
+                                st.warning("No leads found.")
+                        else:
+                            st.error("Failed to initialize browser. Check the Brave path in settings.")
+                except Exception as e:
+                    st.error(f"Database Error: {e}")
 
 with tab2:
     st.header("📂 Database History")
     if st.button("Refresh Data"):
         st.rerun()
         
-    all_data = db.fetch_all()
-    st.dataframe(all_data, width=1000)
-    
-    st.download_button(
-        label="Download Full Database as CSV",
-        data=all_data.to_csv(index=False).encode('utf-8'),
-        file_name="google_scraper_full_history.csv",
-        mime="text/csv"
-    )
+    try:
+        with ScraperDB(config_dict=config) as db:
+            all_data = db.fetch_all()
+            st.dataframe(all_data, width=1000)
+            
+            st.download_button(
+                label="Download Full Database as CSV",
+                data=all_data.to_csv(index=False).encode('utf-8'),
+                file_name="google_scraper_full_history.csv",
+                mime="text/csv"
+            )
+    except Exception as e:
+        st.error(f"Could not connect to database: {e}")

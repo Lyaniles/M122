@@ -82,4 +82,11 @@ class ScraperDB:
         return pd.read_sql("SELECT * FROM leads ORDER BY scraped_at DESC", self.conn)
 
     def close(self):
-        self.conn.close()
+        if self.conn and self.conn.is_connected():
+            self.conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

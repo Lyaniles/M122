@@ -22,18 +22,31 @@ class GoogleScraper:
         self.seen_urls = set()
 
     def _load_config(self, path):
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            print(f"Config file '{path}' not found. Using defaults.")
-            return {
-                "brave_path": r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-                "search_query": "test query",
-                "output_file": "results.csv",
-                "headless": False,
-                "scrape_delay": 5
-            }
+        # Try loading specific path
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error loading {path}: {e}")
+
+        # Try fallback to template
+        template_path = "config.template.json"
+        if os.path.exists(template_path):
+             try:
+                with open(template_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+             except:
+                 pass
+
+        # Defaults
+        return {
+            "brave_path": r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+            "search_query": "test query",
+            "output_file": "results.csv",
+            "headless": False,
+            "scrape_delay": 5
+        }
 
     def setup_driver(self):
         options = Options()
@@ -111,6 +124,7 @@ class GoogleScraper:
             except Exception as e:
                 print(f"Failed to save debug info: {e}")
 
+        new_leads = []
         new_count = 0
         for res in raw_results:
             title_el = res.find('h3')
@@ -125,11 +139,14 @@ class GoogleScraper:
                 link = link_el.get('href')
                 
                 if link and link.startswith("http") and link not in self.seen_urls:
-                    self.results.append([title, link, description])
+                    entry = [title, link, description]
+                    self.results.append(entry)
+                    new_leads.append(entry)
                     self.seen_urls.add(link)
                     new_count += 1
         
         print(f"DEBUG: Added {new_count} new unique leads.")
+        return new_leads
 
     def save_to_csv(self):
         filename = self.config.get("output_file", "leads_export.csv")
