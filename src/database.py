@@ -40,7 +40,7 @@ class ScraperDB:
             conn = mysql.connector.connect(**temp_config)
             cursor = conn.cursor()
             # Use parameterized query to prevent SQL injection
-            cursor.execute("CREATE DATABASE IF NOT EXISTS %s", (self.db_config['database'],))
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{self.db_config['database']}`")
             conn.close()
         except mysql.connector.Error as e:
             print(f"Database creation warning (check credentials): {e}")
