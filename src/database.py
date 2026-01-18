@@ -1,7 +1,7 @@
 import mysql.connector
 import pandas as pd
-import json
 import warnings
+from src.utils import load_config
 
 # Suppress pandas warning about raw DBAPI connection
 warnings.filterwarnings('ignore', category=UserWarning, module='pandas')
@@ -12,11 +12,7 @@ class ScraperDB:
         if config_dict:
             self.config = config_dict
         else:
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    self.config = json.load(f)
-            except Exception:
-                self.config = {}
+            self.config = load_config()
 
         self.db_config = {
             'user': self.config.get('db_user', 'root'),
@@ -29,8 +25,12 @@ class ScraperDB:
         self._ensure_database_exists()
         
         # Connect to the specific database
-        self.conn = mysql.connector.connect(**self.db_config)
-        self.create_table()
+        try:
+            self.conn = mysql.connector.connect(**self.db_config)
+            self.create_table()
+        except mysql.connector.Error as e:
+            print(f"Database connection error: {e}")
+            self.conn = None # Ensure conn is None if connection fails
 
     def _ensure_database_exists(self):
         """Connects to server without DB selected to create DB if missing."""
@@ -39,9 +39,10 @@ class ScraperDB:
             del temp_config['database']
             conn = mysql.connector.connect(**temp_config)
             cursor = conn.cursor()
-            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {self.db_config['database']}")
+            # Use parameterized query to prevent SQL injection
+            cursor.execute("CREATE DATABASE IF NOT EXISTS %s", (self.db_config['database'],))
             conn.close()
-        except Exception as e:
+        except mysql.connector.Error as e:
             print(f"Database creation warning (check credentials): {e}")
 
     def create_table(self):
@@ -51,7 +52,7 @@ class ScraperDB:
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 search_query TEXT,
                 title TEXT,
-                url VARCHAR(255),
+                url VARCHAR(767) UNIQUE,
                 description TEXT,
                 scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -60,22 +61,20 @@ class ScraperDB:
         cursor.close()
 
     def insert_lead(self, query, title, url, description):
-        """Inserts a lead if the URL does not already exist."""
+        """Inserts a lead and returns True if successful, False on duplicate."""
         cursor = self.conn.cursor()
-        
-        # Check for duplicates based on URL
-        # Note: In MariaDB/MySQL we use %s for placeholders
-        cursor.execute("SELECT id FROM leads WHERE url = %s", (url,))
-        if cursor.fetchone() is None:
-            sql = "INSERT INTO leads (search_query, title, url, description) VALUES (%s, %s, %s, %s)"
-            val = (query, title, url, description)
+        sql = "INSERT INTO leads (search_query, title, url, description) VALUES (%s, %s, %s, %s)"
+        val = (query, title, url, description)
+        try:
             cursor.execute(sql, val)
             self.conn.commit()
-            cursor.close()
             return True
-        
-        cursor.close()
-        return False
+        except mysql.connector.IntegrityError:
+            # This occurs if the URL is a duplicate
+            self.conn.rollback()
+            return False
+        finally:
+            cursor.close()
 
     def fetch_all(self):
         """Returns all leads as a Pandas DataFrame."""

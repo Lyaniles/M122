@@ -3,5 +3,24 @@
     "db_user": "root",
     "db_password": "",
     "db_host": "localhost",
-    "db_name": "google_scraper"
+    "db_name": "google_scraper",
+    "selectors": {
+        "cookie_banner": [
+            "//button//div[contains(text(), 'Alle akzeptieren')]",
+            "//button//div[contains(text(), 'I agree')]",
+            "//button//div[contains(text(), 'Accept all')]"
+        ],
+        "results_container": "div.g, div[data-cfg]",
+        "result_container": "div[data-hveid]",
+        "result_title": "h3",
+        "result_link": "a",
+        "result_description": ".VwiC3b, .lyLwlc, .yXK7lf, div[style*='-webkit-line-clamp']",
+        "next_page": [
+            "#pnnext",
+            "a[aria-label='Next page']",
+            "a[aria-label='Nächste Seite']",
+            "//span[contains(text(), 'Next')]/ancestor::a",
+            "//span[contains(text(), 'Weiter')]/ancestor::a"
+        ]
+    }
 }

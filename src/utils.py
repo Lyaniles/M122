@@ -1,6 +1,7 @@
 import os
 import platform
 import shutil
+import json
 
 def get_browser_path():
     """
@@ -46,3 +47,25 @@ def get_browser_path():
             return path
 
     return None
+
+def load_config():
+    """Load config from config.json or fallback to template/defaults."""
+    config = {}
+    
+    # 1. Load template first for defaults
+    if os.path.exists("config.template.json"):
+        try:
+            with open("config.template.json", "r", encoding="utf-8") as f:
+                config.update(json.load(f))
+        except Exception:
+            pass
+
+    # 2. Override with local config if exists
+    if os.path.exists("config.json"):
+        try:
+            with open("config.json", "r", encoding="utf-8") as f:
+                config.update(json.load(f))
+        except Exception:
+            pass
+            
+    return config

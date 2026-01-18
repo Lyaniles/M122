@@ -10,10 +10,11 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, NoSuchElementException
 from bs4 import BeautifulSoup
 from webdriver_manager.chrome import ChromeDriverManager
 
-from src.utils import get_browser_path
+from src.utils import get_browser_path, load_config
 
 # Configure Logging
 log_dir = "debug"
@@ -35,38 +36,13 @@ class GoogleScraper:
         if config_dict:
             self.config = config_dict
         else:
-            self.config = self._load_config(config_path)
+            self.config = load_config()
+
+        self.selectors = self.config.get("selectors", {})
             
         self.driver = None
         self.results = []
         self.seen_urls = set()
-
-    def _load_config(self, path):
-        # Try loading specific path
-        if os.path.exists(path):
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception as e:
-                logger.error(f"Error loading {path}: {e}")
-
-        # Try fallback to template
-        template_path = "config.template.json"
-        if os.path.exists(template_path):
-             try:
-                with open(template_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-             except:
-                 pass
-
-        # Defaults
-        return {
-            "brave_path": get_browser_path(), # Dynamic default
-            "search_query": "test query",
-            "output_file": "results.csv",
-            "headless": False,
-            "scrape_delay": 5
-        }
 
     def setup_driver(self):
         options = Options()
@@ -113,15 +89,26 @@ class GoogleScraper:
 
     def handle_cookies(self):
         # 1. Cookie-Banner (wait up to 10 sec)
-        try:
-            cookie_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//button//div[contains(text(), 'Alle akzeptieren') or contains(text(), 'I agree') or contains(text(), 'Accept all')]/.."))
-            )
-            cookie_button.click()
-            logger.info("Cookies accepted.")
-            time.sleep(random.uniform(1, 2))
-        except:
-            logger.debug("No cookie banner found or path incorrect (proceeding anyway).")
+        cookie_xpaths = self.selectors.get("cookie_banner", [])
+        if not cookie_xpaths:
+            logger.debug("No cookie banner selectors found in config.")
+            return
+
+        for xpath in cookie_xpaths:
+            try:
+                cookie_button = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, xpath))
+                )
+                cookie_button.click()
+                logger.info(f"Clicked cookie button with xpath: {xpath}")
+                WebDriverWait(self.driver, 5).until(
+                    EC.staleness_of(cookie_button)
+                )
+                return 
+            except (TimeoutException, ElementClickInterceptedException, NoSuchElementException):
+                logger.debug(f"Cookie banner not found with xpath: {xpath}")
+        
+        logger.debug("No cookie banner found or all paths incorrect (proceeding anyway).")
 
     def search(self):
         query = self.config.get("search_query", "python")
@@ -133,21 +120,26 @@ class GoogleScraper:
         logger.info("Waiting for search results...")
         # Smart wait for results container instead of hard sleep
         try:
-            WebDriverWait(self.driver, 15).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "div.g, div[data-cfg]"))
-            )
-        except:
+            results_selector = self.selectors.get("results_container")
+            if results_selector:
+                WebDriverWait(self.driver, 15).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, results_selector))
+                )
+        except TimeoutException:
             logger.warning("Timeout waiting for results.")
 
         # Additional random delay for human-like behavior
-        time.sleep(self.config.get("scrape_delay", 5))
+        WebDriverWait(self.driver, self.config.get("scrape_delay", 5)).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
 
     def extract_results(self):
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
         
         # Patterns to find result containers
-        raw_results = soup.find_all('div', dict(cfg=True)) or soup.select(".g") or soup.select(".tF2Cxc")
-        logger.debug(f"Found {len(raw_results)} raw containers")
+        result_container_selector = self.selectors.get("result_container")
+        raw_results = soup.select(result_container_selector) if result_container_selector else []
+        logger.debug(f"Found {len(raw_results)} raw containers using selector: {result_container_selector}")
 
         if len(raw_results) == 0:
             logger.warning("No results found. Saving debug screenshot...")
@@ -165,11 +157,11 @@ class GoogleScraper:
         new_leads = []
         new_count = 0
         for res in raw_results:
-            title_el = res.find('h3')
-            link_el = res.find('a')
+            title_el = res.select_one(self.selectors.get("result_title", "h3"))
+            link_el = res.select_one(self.selectors.get("result_link", "a"))
             
             # Attempt to find the description (snippet)
-            desc_el = res.select_one(".VwiC3b, .lyLwlc, .yXK7lf, div[style*='-webkit-line-clamp']")
+            desc_el = res.select_one(self.selectors.get("result_description", "div"))
             description = desc_el.get_text(strip=True) if desc_el else "No description found"
 
             if title_el and link_el:
@@ -206,29 +198,29 @@ class GoogleScraper:
                 logger.warning("No leads extracted.")
                 
             logger.info(f"File path: {abs_path}")
-        except Exception as e:
+        except (IOError, csv.Error) as e:
             logger.error(f"Error saving CSV: {e}")
 
     def go_to_next_page(self):
         # List of possible selectors for the "Next" button
-        selectors = [
-            (By.ID, "pnnext"),
-            (By.CSS_SELECTOR, 'a[aria-label="Next page"]'),
-            (By.CSS_SELECTOR, 'a[aria-label="Nächste Seite"]'),
-            (By.XPATH, "//span[contains(text(), 'Next')]/ancestor::a"),
-            (By.XPATH, "//span[contains(text(), 'Weiter')]/ancestor::a")
-        ]
+        next_page_selectors = self.selectors.get("next_page", [])
         
-        for strategy, selector in selectors:
+        for selector in next_page_selectors:
             try:
+                # Determine strategy based on selector
+                strategy = By.XPATH if selector.startswith("/") else By.CSS_SELECTOR
+                
                 next_button = WebDriverWait(self.driver, 3).until(
                     EC.element_to_be_clickable((strategy, selector))
                 )
                 next_button.click()
-                logger.info(f"Navigating to next page (found via {strategy})...")
-                time.sleep(self.config.get("scrape_delay", 5))
+                logger.info(f"Navigating to next page (found via {strategy}: {selector})...")
+                # Wait for the next page to load
+                WebDriverWait(self.driver, self.config.get("scrape_delay", 5) + 5).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, self.selectors.get("results_container", "div.g")))
+                )
                 return True
-            except:
+            except (TimeoutException, ElementClickInterceptedException, NoSuchElementException):
                 continue # Try next selector
         
         logger.info("Next page button not found (or last page reached).")

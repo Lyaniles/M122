@@ -3,33 +3,13 @@ import pandas as pd
 import json
 import os
 import time
+import mysql.connector
+import logging
 from src.search import GoogleScraper
 from src.database import ScraperDB
-from src.utils import get_browser_path
+from src.utils import get_browser_path, load_config
 
 st.set_page_config(page_title="Google Scraper", layout="wide")
-
-def load_config():
-    """Load config from config.json or fallback to template/defaults."""
-    config = {}
-    
-    # 1. Load template first for defaults
-    if os.path.exists("config.template.json"):
-        try:
-            with open("config.template.json", "r", encoding="utf-8") as f:
-                config.update(json.load(f))
-        except Exception:
-            pass
-
-    # 2. Override with local config if exists
-    if os.path.exists("config.json"):
-        try:
-            with open("config.json", "r", encoding="utf-8") as f:
-                config.update(json.load(f))
-        except Exception:
-            pass
-            
-    return config
 
 # Load configuration once
 config = load_config()
@@ -136,8 +116,11 @@ with tab1:
                                 st.warning("No leads found.")
                         else:
                             st.error("Failed to initialize browser. Check the Brave path in settings.")
+                except mysql.connector.Error as e:
+                    st.error(f"Database Connection Error: {e}")
                 except Exception as e:
-                    st.error(f"Database Error: {e}")
+                    st.error(f"An unexpected error occurred: {e}")
+                    logging.error(f"Scraping error: {e}", exc_info=True)
 
 with tab2:
     st.header("📂 Database History")
@@ -146,14 +129,20 @@ with tab2:
         
     try:
         with ScraperDB(config_dict=config) as db:
-            all_data = db.fetch_all()
-            st.dataframe(all_data, width=1000)
-            
-            st.download_button(
-                label="Download Full Database as CSV",
-                data=all_data.to_csv(index=False).encode('utf-8'),
-                file_name="google_scraper_full_history.csv",
-                mime="text/csv"
-            )
-    except Exception as e:
+            if db.conn:
+                all_data = db.fetch_all()
+                st.dataframe(all_data, width=1000)
+                
+                st.download_button(
+                    label="Download Full Database as CSV",
+                    data=all_data.to_csv(index=False).encode('utf-8'),
+                    file_name="google_scraper_full_history.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.warning("Could not connect to the database. Please check your configuration.")
+    except mysql.connector.Error as e:
         st.error(f"Could not connect to database: {e}")
+    except Exception as e:
+        st.error(f"An unexpected error occurred while fetching history: {e}")
+        logging.error(f"History fetch error: {e}", exc_info=True)
