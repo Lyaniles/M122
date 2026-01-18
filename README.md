@@ -195,3 +195,6 @@ Contributions are what make the open source community such an amazing place to l
 ## License
 
 Distributed under the Unlicense License. See `LICENSE.txt` for more information.
+
+Author: Valentin Ernst
+Date: 18.01
